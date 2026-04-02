@@ -1,4 +1,4 @@
-module github.com/bufferpunk/contriblog
+module github.com/logmachine/go
 
 go 1.21
 
