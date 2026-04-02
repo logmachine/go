@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 
-	contriblog "github.com/logmachine/go"
+	logmachine "github.com/logmachine/go"
 )
 
 func main() {
 	// Basic logger without central forwarding.
-	logger, err := contriblog.New(contriblog.Options{
+	logger, err := logmachine.New(logmachine.Options{
 		LogFile:    "logs.log",
 		ErrorFile:  "errors.log",
 		DebugLevel: 0,
@@ -45,10 +45,10 @@ func main() {
 	}
 
 	// Logger with central HTTP forwarding.
-	centralLogger, err := contriblog.New(contriblog.Options{
+	centralLogger, err := logmachine.New(logmachine.Options{
 		LogFile:   "central_logs.log",
 		ErrorFile: "central_errors.log",
-		Central: &contriblog.CentralConfig{
+		Central: &logmachine.CentralConfig{
 			URL:  "https://logmachine.bufferpunk.com",
 			Room: "public",
 		},

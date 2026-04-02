@@ -1,7 +1,7 @@
-// Package contriblog provides a collaborative, beautiful logging system for distributed developers.
+// Package logmachine provides a collaborative, beautiful logging system for distributed developers.
 // It wraps Go's standard log/slog library with colored terminal output, file logging,
 // and optional log forwarding to a central server via HTTP or WebSocket (Socket.IO).
-package contriblog
+package logmachine 
 
 import (
 	"bytes"
@@ -287,8 +287,8 @@ func (t *WebSocketTransporter) Close() error {
 	return nil
 }
 
-// contribHandler is the core slog.Handler implementation.
-type contribHandler struct {
+// LogHandler is the core slog.Handler implementation.
+type LogHandler struct {
 	mu           sync.Mutex
 	opts         Options
 	logWriter    io.WriteCloser
@@ -301,7 +301,7 @@ type contribHandler struct {
 	groups       []string
 }
 
-func newContribHandler(opts Options, transporter Transporter) (*contribHandler, error) {
+func newLogHandler(opts Options, transporter Transporter) (*LogHandler, error) {
 	lf, err := os.OpenFile(opts.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open log file %q: %w", opts.LogFile, err)
@@ -313,7 +313,7 @@ func newContribHandler(opts Options, transporter Transporter) (*contribHandler, 
 		return nil, fmt.Errorf("failed to open error file %q: %w", opts.ErrorFile, err)
 	}
 
-	return &contribHandler{
+	return &LogHandler{
 		opts:        opts,
 		logWriter:   lf,
 		errorWriter: ef,
@@ -341,7 +341,7 @@ func newContribHandler(opts Options, transporter Transporter) (*contribHandler, 
 }
 
 // Enabled reports whether the handler handles records at the given level.
-func (h *contribHandler) Enabled(_ context.Context, level slog.Level) bool {
+func (h *LogHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return true // level gating is handled in Handle via isAllowed
 }
 
@@ -349,7 +349,7 @@ func (h *contribHandler) Enabled(_ context.Context, level slog.Level) bool {
 // File writes are never filtered — all levels are persisted to disk.
 // DebugLevel filtering applies only to the transporter (console/central output),
 // mirroring the Python implementation where only the console handler is filtered.
-func (h *contribHandler) Handle(_ context.Context, r slog.Record) error {
+func (h *LogHandler) Handle(_ context.Context, r slog.Record) error {
 	levelName := h.levelName(r.Level)
 
 	// Resolve caller's source file for the module directory.
@@ -382,30 +382,30 @@ func (h *contribHandler) Handle(_ context.Context, r slog.Record) error {
 	}
 
 	if err := h.transporter.Emit(formatted); err != nil {
-		fmt.Fprintf(os.Stderr, "[contriblog] transport error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[logmachine] transport error: %v\n", err)
 	}
 	return nil
 }
 
 // WithAttrs returns a new handler with the given attributes pre-set.
-func (h *contribHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+func (h *LogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	h2 := h.clone()
 	h2.attrs = append(h2.attrs, attrs...)
 	return h2
 }
 
 // WithGroup returns a new handler with the given group name pre-set.
-func (h *contribHandler) WithGroup(name string) slog.Handler {
+func (h *LogHandler) WithGroup(name string) slog.Handler {
 	h2 := h.clone()
 	h2.groups = append(h2.groups, name)
 	return h2
 }
 
 // clone returns a shallow copy of the handler with a fresh mutex.
-func (h *contribHandler) clone() *contribHandler {
+func (h *LogHandler) clone() *LogHandler {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	return &contribHandler{
+	return &LogHandler{
 		opts:         h.opts,
 		logWriter:    h.logWriter,
 		errorWriter:  h.errorWriter,
@@ -419,7 +419,7 @@ func (h *contribHandler) clone() *contribHandler {
 }
 
 // levelName converts a slog.Level to a human-readable name.
-func (h *contribHandler) levelName(level slog.Level) string {
+func (h *LogHandler) levelName(level slog.Level) string {
 	if name, ok := h.customLevels[level]; ok {
 		return name
 	}
@@ -436,7 +436,7 @@ func (h *contribHandler) levelName(level slog.Level) string {
 }
 
 // isAllowed reports whether the given level name passes the current DebugLevel filter.
-func (h *contribHandler) isAllowed(levelName string) bool {
+func (h *LogHandler) isAllowed(levelName string) bool {
 	if h.opts.DebugLevel == 0 || h.opts.Verbose {
 		return true
 	}
@@ -453,7 +453,7 @@ func (h *contribHandler) isAllowed(levelName string) bool {
 }
 
 // formatLog produces the LogMachine-style terminal string for a log entry.
-func (h *contribHandler) formatLog(levelName, msg, parentDir string, t time.Time) string {
+func (h *LogHandler) formatLog(levelName, msg, parentDir string, t time.Time) string {
 	username := os.Getenv("CL_USERNAME")
 	if username == "" {
 		username = getLogin()
@@ -481,7 +481,7 @@ func (h *contribHandler) formatLog(levelName, msg, parentDir string, t time.Time
 // LogMachine wraps slog.Logger with LogMachine-specific functionality.
 type LogMachine struct {
 	*slog.Logger
-	handler *contribHandler
+	handler *LogHandler
 }
 
 // New creates a new LogMachine instance.
@@ -509,7 +509,7 @@ func New(opts Options) (*LogMachine, error) {
 			t, err := newWebSocketTransporter(parseLog, opts.Central)
 			if err != nil {
 				// Fall back to stdout; don't hard-fail on connection errors.
-				fmt.Fprintf(os.Stderr, "[contriblog] websocket connect failed: %v\n", err)
+				fmt.Fprintf(os.Stderr, "[logmachine] websocket connect failed: %v\n", err)
 				transporter = &stdoutTransporter{}
 			} else {
 				transporter = t
@@ -521,7 +521,7 @@ func New(opts Options) (*LogMachine, error) {
 		transporter = &stdoutTransporter{}
 	}
 
-	handler, err := newContribHandler(opts, transporter)
+	handler, err := newLogHandler(opts, transporter)
 	if err != nil {
 		return nil, err
 	}
@@ -728,13 +728,13 @@ var DefaultLogger = func() *LogMachine {
 		Verbose:    false,
 		Central: &CentralConfig{
 			URL:  "https://logmachine.bufferpunk.com",
-			Room: "public",
+			Room: getLogin() + "_logs", // use a per-user room to avoid collisions
 		},
 	})
 	if err != nil {
 		// If we cannot create the default logger (e.g. can't open log files),
 		// fall back to a plain slog logger to avoid a panic at init time.
-		fmt.Fprintf(os.Stderr, "[contriblog] default logger init failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[logmachine] default logger init failed: %v\n", err)
 		return nil
 	}
 	return logger

@@ -1,4 +1,4 @@
-package contriblog_test
+package logmachine_test
 
 import (
 	"encoding/json"
@@ -9,14 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	contriblog "github.com/bufferpunk/contriblog"
+	LogMachine "github.com/logmachine/go"
 )
 
 // tempOpts returns Options pointing to temporary log files that are cleaned up after the test.
-func tempOpts(t *testing.T) contriblog.Options {
+func tempOpts(t *testing.T) LogMachine.Options {
 	t.Helper()
 	dir := t.TempDir()
-	return contriblog.Options{
+	return LogMachine.Options{
 		LogFile:   filepath.Join(dir, "logs.log"),
 		ErrorFile: filepath.Join(dir, "errors.log"),
 	}
@@ -24,7 +24,7 @@ func tempOpts(t *testing.T) contriblog.Options {
 
 func TestNew(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -33,7 +33,7 @@ func TestNew(t *testing.T) {
 
 func TestBasicLevels(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -49,7 +49,7 @@ func TestBasicLevels(t *testing.T) {
 
 func TestLogFilesAreWritten(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -85,7 +85,7 @@ func TestLogFilesAreWritten(t *testing.T) {
 
 func TestSuccessLevel(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -107,7 +107,7 @@ func TestSuccessLevel(t *testing.T) {
 
 func TestNewLevel(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -127,7 +127,7 @@ func TestNewLevel(t *testing.T) {
 
 func TestParseLog(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -143,7 +143,7 @@ func TestParseLog(t *testing.T) {
 	}
 
 	// Re-open for further use.
-	logger, err = contriblog.New(opts)
+	logger, err = LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("re-opening logger: %v", err)
 	}
@@ -169,7 +169,7 @@ func TestParseLog(t *testing.T) {
 
 func TestJsonifier(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -179,7 +179,7 @@ func TestJsonifier(t *testing.T) {
 	logger.Close()
 
 	// Re-create logger (file already exists, append mode).
-	logger, err = contriblog.New(opts)
+	logger, err = LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("re-opening logger: %v", err)
 	}
@@ -233,12 +233,12 @@ func TestDebugLevelFilter(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.level+"_dl"+strconv.Itoa(tc.debugLevel), func(t *testing.T) {
 			dir := t.TempDir()
-			opts := contriblog.Options{
+			opts := LogMachine.Options{
 				LogFile:    filepath.Join(dir, "logs.log"),
 				ErrorFile:  filepath.Join(dir, "errors.log"),
 				DebugLevel: tc.debugLevel,
 			}
-			logger, err := contriblog.New(opts)
+			logger, err := LogMachine.New(opts)
 			if err != nil {
 				t.Fatalf("New() error = %v", err)
 			}
@@ -279,7 +279,7 @@ func TestCLUsernameEnvVar(t *testing.T) {
 	t.Cleanup(func() { os.Unsetenv("CL_USERNAME") })
 
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -299,7 +299,7 @@ func TestCLUsernameEnvVar(t *testing.T) {
 
 func TestLogFormat(t *testing.T) {
 	opts := tempOpts(t)
-	logger, err := contriblog.New(opts)
+	logger, err := LogMachine.New(opts)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}

@@ -1,8 +1,8 @@
-# 🧠 contriblog (Go)
+# 🧠 logmachine (Go)
 
 > Collaborative, beautiful logging system for distributed developers — Go edition
 
-**contriblog** brings the full `logmachine` experience to Go. It is built on top of Go's standard `log/slog` library (Go 1.21+) and provides colored terminal output, structured file logging, a custom `SUCCESS` level, dynamic custom levels, log parsing/export, and optional forwarding to a central server via HTTP or Socket.IO WebSocket.
+**logmachine** brings the full `logmachine` experience to Go. It is built on top of Go's standard `log/slog` library (Go 1.21+) and provides colored terminal output, structured file logging, a custom `SUCCESS` level, dynamic custom levels, log parsing/export, and optional forwarding to a central server via HTTP or Socket.IO WebSocket.
 
 ---
 
@@ -23,7 +23,7 @@
 ## ⚙️ Installation
 
 ```bash
-go get github.com/bufferpunk/contriblog
+go get github.com/bufferpunk/logmachine
 ```
 
 ---
@@ -37,11 +37,11 @@ package main
 
 import (
     "log/slog"
-    contriblog "github.com/bufferpunk/contriblog"
+    logmachine "github.com/bufferpunk/logmachine"
 )
 
 func main() {
-    logger, err := contriblog.New(contriblog.Options{
+    logger, err := logmachine.New(logmachine.Options{
         LogFile:    "logs.log",
         ErrorFile:  "errors.log",
         DebugLevel: 0,
@@ -62,10 +62,10 @@ func main() {
 ### With Central Logging (HTTP)
 
 ```go
-logger, err := contriblog.New(contriblog.Options{
+logger, err := logmachine.New(logmachine.Options{
     LogFile:   "logs.log",
     ErrorFile: "errors.log",
-    Central: &contriblog.CentralConfig{
+    Central: &logmachine.CentralConfig{
         URL:      "https://logmachine.bufferpunk.com",
         Room:     "team_alpha",
         Endpoint: "/api/logs",                              // optional, default: /api/logs
@@ -77,10 +77,10 @@ logger, err := contriblog.New(contriblog.Options{
 ### With Central Logging (Socket.IO WebSocket)
 
 ```go
-logger, err := contriblog.New(contriblog.Options{
+logger, err := logmachine.New(logmachine.Options{
     LogFile:  "logs.log",
     ErrorFile: "errors.log",
-    Central: &contriblog.CentralConfig{
+    Central: &logmachine.CentralConfig{
         URL:          "https://logmachine.bufferpunk.com",
         Room:         "team_alpha",
         SocketIO:     true,
