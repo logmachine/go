@@ -23,7 +23,7 @@
 ## ⚙️ Installation
 
 ```bash
-go get github.com/bufferpunk/logmachine
+go get github.com/logmachine/go
 ```
 
 ---
@@ -37,7 +37,7 @@ package main
 
 import (
     "log/slog"
-    logmachine "github.com/bufferpunk/logmachine"
+    logmachine "github.com/logmachine/go"
 )
 
 func main() {
